@@ -19,11 +19,13 @@ var updateZ0rProgress = function (id, progress) {
             }
         }
     }
+    return 0;
 };
 
 var resetMechaz0r = function (id) {
     mechazorProgress[id].progress = 0;
     console.log('ALERT: reset mechaz0r progress for player ' + id);
+    return 0;
 };
 
 SDK.PlayCardFromHandAction.prototype._execute = function() {
