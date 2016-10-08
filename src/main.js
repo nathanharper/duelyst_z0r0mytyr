@@ -36,7 +36,7 @@ SDK.PlayCardFromHandAction.prototype._execute = function() {
         var mod = modifiers[i];
         if (mod.type === z0r) {
             for (var j=0; j<mod.modifiersContextObjects.length; j++) {
-                var innerMod = modifiers.modifiersContextObjects[j];
+                var innerMod = mod.modifiersContextObjects[j];
                 if (innerMod.type === progressType) {
                     updateZ0rProgress(ownerId, innerMod.progressContribution);
                     break;
