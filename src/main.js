@@ -15,6 +15,7 @@ var updateZ0rProgress = function (id, progress) {
             console.log('AlERT:  z0r pprogress for player '+i+' equals '+mechazorProgress[i].progress);
             if (mechazorProgress[i].progress === 1) {
                 resetMechaz0r(i);
+                break;
             }
         }
     }
