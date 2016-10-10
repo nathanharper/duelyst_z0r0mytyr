@@ -5,26 +5,29 @@
 //
 
 
+//var _originalGameSessionCreate = SDK.GameSession.create;
 var sesh = SDK.GameSession.getInstance();
 var orig_PlayCardFromHandAction = SDK.PlayCardFromHandAction.prototype._execute;
 
 //////////////
 
-$('#app-game-player1').append($('<div id="z0r"><div class="progress"></div></div>'));
-$('#z0r .progress').css({
-    width:'200px',
-    height:'30px',
-    'margin-left': '150px',
-    border:'3px solid red',
-    'background-color': 'transparent'
-})
-.append(
-    $('<div class="filling"></div>').css({
-        height:'100%',
-        width:'0%',
-        'background-color': 'blue'
+for (var i=1; i<3; i++)  {
+    var margin = i == 1 ? 150 : 800;
+    $('#app-game-player'+i+' .user-details').append($('<div id="z0r"><div class="progress"></div></div>'));
+    $('#app-game-player'+i+' #z0r .progress').css({
+        width:'200px',
+        height:'30px',
+        border:'3px solid red',
+        'background-color': 'transparent'
     })
-);
+    .append(
+        $('<div class="filling"></div>').css({
+            height:'100%',
+            width:'0%',
+            'background-color': 'blue'
+        })
+    );
+}
 
 ////////////////
 
@@ -39,15 +42,24 @@ var updateZ0rProgress = function (id, progress) {
     for (var i=0; i<mechazorProgress.length; i++) {
         if (mechazorProgress[i].id === id) {
             mechazorProgress[i].progress += progress;
-            var percent = mechazorProgress[i].progress * 100; // TODO: both playas
+            if (mechazorProgress[i].progress > 1) {
+                return 0; // mechazor can't be built twice
+            }
+            var percent = mechazorProgress[i].progress * 100;
             var deviation = mechazorProgress[i].progress * 10;
-            $('#z0r .progress .filling').animate({ width: ""+percent+"%"});
-            $('#z0r .progress').jrumble({ x: deviation, y: deviation }).trigger('startRumble');
-            console.log('AlERT:  z0r pprogress for player '+i+' equals '+mechazorProgress[i].progress);
+            var playerNumber = i+1;
+
+            $('#app-game-player'+playerNumber+' #z0r .progress')
+                .jrumble({ x: deviation, y: deviation })
+                .trigger('startRumble')
+                .find('.filling')
+                .animate({ width: percent+"%"});
+
+            console.log('AlERT:  z0r pprogress for player '+playerNumber+' equals '+mechazorProgress[i].progress);
             if (mechazorProgress[i].progress === 1) {
                 resetMechaz0r(i);
-                break;
             }
+            break;
         }
     }
     return 0;
@@ -57,42 +69,23 @@ var resetMechaz0r = function (id) {
     mechazorProgress[id].progress = 0;
     console.log('ALERT: reset mechaz0r progress for player ' + id);
     setTimeout(function() {
-        $('#z0r .progress .filling').css({ width: "0%" });
-        $('#z0r .progress').trigger('stopRumble');
+        //$('#app-game-player'+(id+1)+' #z0r .progress .filling').css({ width: "0%" });
+        $('#app-game-player'+(id+1)+' #z0r .progress').trigger('stopRumble').hide();
     }, 3000);
     return 0;
 };
 
-SDK.PlayCardFromHandAction.prototype._execute = function() {
+var _origModAction = SDK.ApplyModifierAction.prototype._execute;
+SDK.ApplyModifierAction.prototype._execute = function () {
     var args = arguments;
-    var z0r = "ModifierOpeningGambitApplyMechazorPlayerModifiers";
-    var progressType = "PlayerModifierMechazorBuildProgress";
+
+    console.log(this);
     var ownerId = this.ownerId;
+    var modifier = this.modifierContextObject;
 
-    var modifiers;
-    try{
-        modifiers = this.cardDataOrIndex.appliedModifiersContextObjects;
-    } catch(e){}
-
-    try {
-        if (modifiers) {
-            for (var i=0; i<modifiers.length; i++) {
-                var mod = modifiers[i];
-                if (mod.type === z0r) {
-                    for (var j=0; j<mod.modifiersContextObjects.length; j++) {
-                        var innerMod = mod.modifiersContextObjects[j];
-                        if (innerMod.type === progressType) {
-                            updateZ0rProgress(ownerId, innerMod.progressContribution);
-                            break;
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-    } catch (e) {
-        console.log('ERROR: ' + e.message);
+    if (modifier.type == "PlayerModifierMechazorBuildProgress") {
+        updateZ0rProgress(ownerId, modifier.progressContribution);
     }
 
-    return orig_PlayCardFromHandAction.apply(this, args);
+    return _origModAction.apply(this, args);
 };
